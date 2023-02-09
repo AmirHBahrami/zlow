@@ -1,5 +1,5 @@
 #ifndef __ZLOW_H
-  #include "../h/zlow.h"
+  #include "zlow.h"
 #endif
 
 #ifndef __STRING_H
@@ -8,6 +8,10 @@
 
 #ifndef __STDIO_H
   #include <stdio.h>
+#endif
+
+#ifndef __UNISTD_H 
+  #include <unistd.h>
 #endif
 
 /*
@@ -29,9 +33,13 @@ int atol(char *s); // in stdlib
 
 int main(int argc,char **argv){
 
+  // TODO add argeparse support
+  // TODO add second and 0.5 second support
   long nano=2000l;
+  long inbetween=0l;
   char start_from=33;
-  char sep=' ';
+  char sep[16];
+  int mode=ZLOW_NORMAL;
   
   ++argv; // exclude filename
   for(;*argv;++argv){
@@ -46,9 +54,27 @@ int main(int argc,char **argv){
       nano=atol(*argv);
     }
 
+    else if(strcmp(*argv,"-i")==0 || strcmp(*argv,"--inbetween")==0){ // NEW
+      ++argv;
+      inbetween=atol(*argv);
+    }
+
     else if(strcmp(*argv,"-sf")==0 || strcmp(*argv,"--start-from")==0){
       ++argv;
       start_from=**argv;
+    }
+
+    else if(strcmp(*argv,"-s")==0 || strcmp(*argv,"--seperator")==0){
+      ++argv;
+      strcpy(sep,*argv); // can be a string now!
+    }
+    
+    // for now only normal and zlow_and_back modes are supported
+    else if(strcmp(*argv,"-b")==0 || strcmp(*argv,"--zlow-and-back")==0){ // NEW
+      mode=ZLOW_AND_BACK;
+
+      /* set some default value */
+      // if(!inbetween) inbetween=300000l;
     }
 
     else {
@@ -59,14 +85,29 @@ int main(int argc,char **argv){
   }
   
   for (int i=0;i<inputs_i;i++){
-    zlow_str(inputs[i],start_from,nano);
-    putchar(sep);
+
+    switch(mode){
+      
+      case ZLOW_NORMAL:
+        zlow_str(inputs[i],start_from,nano);
+        usleep(inbetween);
+        printf("%s",sep);
+        putchar('\n');
+      break;
+      
+      case ZLOW_AND_BACK:
+        zlow_and_back(inputs[i],start_from,nano,inbetween);
+      break;
+
+      default:
+        zlow("you don't really have to be seeing this!\n",nano);
+      break;
+    }
   }
-  putchar('\n');
 
   return 0;
 }
 
 void print_h(){
-  printf("zlow : print inputs like it's a movie\nusage: zlow [options] input\n\t-h\t|| --help\t\tprint this help\n\t-d  [n] || --delay [n]\t\tdefault=2000\tn nano seconds between each word\n\t-sf [a] || --start-from [a]\tdefault='0'\tstart from ascii character 'a'\n\t-s  [a] || --seperator [a]\tdefault=' '\tseperator between each word\n" );
+  printf("zlow : print inputs like it's a movie!\nusage: zlow [options] input\n\t-h\t|| --help\t\tprint this help\n\t-d  [n] || --delay [n]\t\tdefault=2000\tn nano seconds between each word\n\t-b \t|| --zlow-and-back\tdefault=[not given]\tclears the screen after each entry\n\t-i  [n] || --inbetween [n]\tdefault=300k\twait before writing the next word\n\t-sf [a] || --start-from [a]\tdefault='0'\tstart from ascii character 'a'\n\t-s  [a] || --seperator [a]\tdefault=' '\tseperator between each word\n" );
 }

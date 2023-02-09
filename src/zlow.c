@@ -1,5 +1,5 @@
 #ifndef __ZLOW_H
-  #include "../h/zlow.h"
+  #include "zlow.h"
 #endif
 
 // for printing
@@ -11,6 +11,8 @@
   #include <unistd.h>
 #endif
 
+#define zlow_unchar( n ) ( zlow_unchar_c( ' ' , (n)  ) )
+
 static void zlow_char(char curr,long nano){
 
   putchar(curr);
@@ -21,7 +23,16 @@ static void zlow_char(char curr,long nano){
   fflush(stdout);
 }
 
-/* delay not yet taken into account */
+static void zlow_unchar_c(char c,long nano){
+    putchar('\b');
+    fflush(stdout);
+    usleep(nano);
+    putchar(c);
+    putchar('\b');
+    fflush(stdout);
+    usleep(nano);
+}
+
 // c == starting character
 void zlow_str(char *s,char c,long nano){
   char curr=0;
@@ -35,6 +46,18 @@ void zlow_str(char *s,char c,long nano){
     }
     putchar(curr);
     ++s;
+    fflush(stdout); // to solve some bug (dont' remove it!)
+  }
+  fflush(stdout); // to solve some bug (dont' remove it!)
+}
+
+void zlow_and_back(char *s,char c, long nano,long inbetween){
+  char *start=s;
+  zlow_str(s,c,nano);
+  usleep(inbetween);
+  for ( ;*start;++start){
+    zlow_unchar(nano*8);
+    usleep(nano);
   }
 
 }
